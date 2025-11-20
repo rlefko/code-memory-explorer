@@ -1,0 +1,19 @@
+# Frontend build-only container for production
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --silent
+
+# Copy source code
+COPY . .
+
+# Build for production
+RUN npm run build
+
+# The built files are now in /app/dist
+# This container will exit after building, and the volume will contain the static files

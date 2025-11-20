@@ -1,0 +1,195 @@
+# Claude Code Memory Explorer - Makefile
+# Simple, beautiful commands for managing the application
+
+# Colors for beautiful output
+BLUE := \033[1;34m
+GREEN := \033[1;32m
+YELLOW := \033[1;33m
+RED := \033[1;31m
+PURPLE := \033[1;35m
+CYAN := \033[1;36m
+WHITE := \033[1;37m
+NC := \033[0m # No Color
+
+# Docker compose command (auto-detect version)
+DOCKER_COMPOSE := $(shell which docker-compose 2>/dev/null || echo "docker compose")
+
+# Default target - starts everything
+.PHONY: all
+all: run
+
+# Main commands
+.PHONY: run
+run: header check-prerequisites
+	@echo "$(BLUE)🚀 Starting Claude Code Memory Explorer...$(NC)"
+	@$(DOCKER_COMPOSE) up -d
+	@echo "$(GREEN)⏳ Waiting for services to be ready...$(NC)"
+	@sleep 5
+	@make health-check
+	@echo ""
+	@echo "$(GREEN)✨ Application is ready!$(NC)"
+	@echo "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(WHITE)   🌐 Web Interface:$(NC) http://localhost:8080"
+	@echo "$(WHITE)   📚 API Docs:$(NC) http://localhost:8080/api/docs"
+	@echo "$(WHITE)   🔍 Qdrant:$(NC) http://localhost:8080/qdrant/dashboard"
+	@echo "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo ""
+	@echo "$(YELLOW)💡 Useful commands:$(NC)"
+	@echo "   $(WHITE)make logs$(NC)    - View application logs"
+	@echo "   $(WHITE)make stop$(NC)    - Stop all services"
+	@echo "   $(WHITE)make restart$(NC) - Restart all services"
+	@echo "   $(WHITE)make clean$(NC)   - Remove everything"
+	@echo ""
+
+# Development mode with hot reload
+.PHONY: dev
+dev: header
+	@echo "$(BLUE)🔧 Starting in development mode with hot reload...$(NC)"
+	@$(DOCKER_COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml up
+
+# Stop all services
+.PHONY: stop
+stop:
+	@echo "$(YELLOW)🛑 Stopping all services...$(NC)"
+	@$(DOCKER_COMPOSE) down
+	@echo "$(GREEN)✅ All services stopped$(NC)"
+
+# Restart services
+.PHONY: restart
+restart:
+	@echo "$(YELLOW)🔄 Restarting services...$(NC)"
+	@$(DOCKER_COMPOSE) restart
+	@echo "$(GREEN)✅ Services restarted$(NC)"
+
+# View logs
+.PHONY: logs
+logs:
+	@echo "$(BLUE)📋 Showing logs (Ctrl+C to exit)...$(NC)"
+	@$(DOCKER_COMPOSE) logs -f
+
+# View logs for specific service
+.PHONY: logs-%
+logs-%:
+	@echo "$(BLUE)📋 Showing logs for $* (Ctrl+C to exit)...$(NC)"
+	@$(DOCKER_COMPOSE) logs -f $*
+
+# Clean everything (including volumes)
+.PHONY: clean
+clean:
+	@echo "$(RED)⚠️  This will remove all containers, volumes, and data!$(NC)"
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo "$(YELLOW)🧹 Cleaning up...$(NC)"
+	@$(DOCKER_COMPOSE) down -v --rmi local
+	@echo "$(GREEN)✅ Cleanup complete$(NC)"
+
+# Rebuild images
+.PHONY: rebuild
+rebuild:
+	@echo "$(YELLOW)🔨 Rebuilding images...$(NC)"
+	@$(DOCKER_COMPOSE) build --no-cache
+	@echo "$(GREEN)✅ Images rebuilt$(NC)"
+
+# Build images
+.PHONY: build
+build:
+	@echo "$(YELLOW)🔨 Building images...$(NC)"
+	@$(DOCKER_COMPOSE) build
+	@echo "$(GREEN)✅ Images built$(NC)"
+
+# Pull latest images
+.PHONY: pull
+pull:
+	@echo "$(BLUE)⬇️  Pulling latest images...$(NC)"
+	@$(DOCKER_COMPOSE) pull
+	@echo "$(GREEN)✅ Images updated$(NC)"
+
+# Check service status
+.PHONY: status
+status:
+	@echo "$(BLUE)📊 Service Status:$(NC)"
+	@$(DOCKER_COMPOSE) ps
+
+# Health check
+.PHONY: health-check
+health-check:
+	@echo "$(BLUE)🏥 Checking service health...$(NC)"
+	@curl -f http://localhost:8080/api/health > /dev/null 2>&1 && echo "$(GREEN)✅ Backend API: Healthy$(NC)" || echo "$(RED)❌ Backend API: Not responding$(NC)"
+	@curl -f http://localhost:8080/qdrant/health > /dev/null 2>&1 && echo "$(GREEN)✅ Qdrant DB: Healthy$(NC)" || echo "$(RED)❌ Qdrant DB: Not responding$(NC)"
+	@curl -f http://localhost:8080/ > /dev/null 2>&1 && echo "$(GREEN)✅ Frontend: Healthy$(NC)" || echo "$(RED)❌ Frontend: Not responding$(NC)"
+
+# Shell access
+.PHONY: shell-%
+shell-%:
+	@echo "$(BLUE)🐚 Opening shell in $* container...$(NC)"
+	@$(DOCKER_COMPOSE) exec $* /bin/sh
+
+# Index a sample project (for testing)
+.PHONY: index-sample
+index-sample:
+	@echo "$(PURPLE)📚 Indexing sample project...$(NC)"
+	@echo "$(YELLOW)Note: Ensure claude-indexer is installed$(NC)"
+	@claude-indexer index -p ../claude_indexer -c sample-indexer-code || echo "$(RED)❌ Failed to index. Is claude-indexer installed?$(NC)"
+
+# Open in browser
+.PHONY: open
+open:
+	@echo "$(BLUE)🌐 Opening in browser...$(NC)"
+	@python3 -m webbrowser "http://localhost:8080" 2>/dev/null || \
+	 python -m webbrowser "http://localhost:8080" 2>/dev/null || \
+	 open "http://localhost:8080" 2>/dev/null || \
+	 xdg-open "http://localhost:8080" 2>/dev/null || \
+	 echo "$(YELLOW)Please open http://localhost:8080 in your browser$(NC)"
+
+# Pretty header
+.PHONY: header
+header:
+	@echo ""
+	@echo "$(PURPLE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(PURPLE)   Claude Code Memory Explorer$(NC)"
+	@echo "$(PURPLE)   Beautiful Code Visualization & Search$(NC)"
+	@echo "$(PURPLE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo ""
+
+# Check prerequisites
+.PHONY: check-prerequisites
+check-prerequisites:
+	@echo "$(BLUE)🔍 Checking prerequisites...$(NC)"
+	@which docker > /dev/null 2>&1 || (echo "$(RED)❌ Docker not found. Please install Docker.$(NC)" && exit 1)
+	@docker info > /dev/null 2>&1 || (echo "$(RED)❌ Docker daemon not running. Please start Docker.$(NC)" && exit 1)
+	@echo "$(GREEN)✅ Prerequisites satisfied$(NC)"
+	@echo ""
+
+# Help command
+.PHONY: help
+help:
+	@echo "$(PURPLE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(PURPLE)   Claude Code Memory Explorer - Commands$(NC)"
+	@echo "$(PURPLE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo ""
+	@echo "$(WHITE)Basic Commands:$(NC)"
+	@echo "  $(CYAN)make$(NC)              Start the application (default)"
+	@echo "  $(CYAN)make stop$(NC)         Stop all services"
+	@echo "  $(CYAN)make restart$(NC)      Restart all services"
+	@echo "  $(CYAN)make logs$(NC)         View logs (all services)"
+	@echo "  $(CYAN)make status$(NC)       Check service status"
+	@echo "  $(CYAN)make open$(NC)         Open in browser"
+	@echo ""
+	@echo "$(WHITE)Development:$(NC)"
+	@echo "  $(CYAN)make dev$(NC)          Start with hot reload"
+	@echo "  $(CYAN)make build$(NC)        Build Docker images"
+	@echo "  $(CYAN)make rebuild$(NC)      Rebuild images (no cache)"
+	@echo "  $(CYAN)make shell-[service]$(NC) Open shell in container"
+	@echo ""
+	@echo "$(WHITE)Maintenance:$(NC)"
+	@echo "  $(CYAN)make clean$(NC)        Remove everything (⚠️  data loss)"
+	@echo "  $(CYAN)make pull$(NC)         Update base images"
+	@echo "  $(CYAN)make health-check$(NC) Check service health"
+	@echo ""
+	@echo "$(WHITE)Examples:$(NC)"
+	@echo "  $(CYAN)make logs-backend$(NC) View backend logs only"
+	@echo "  $(CYAN)make shell-backend$(NC) Open shell in backend"
+	@echo "  $(CYAN)make index-sample$(NC) Index a sample project"
+	@echo ""
+
+# Default target
+.DEFAULT_GOAL := run
