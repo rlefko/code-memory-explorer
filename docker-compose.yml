@@ -51,11 +51,13 @@ services:
         - linux/arm64
     container_name: claude-memory-backend
     platform: linux/arm64
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
     environment:
       - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
       - PYTHONUNBUFFERED=1
       - API_HOST=0.0.0.0
-      - API_PORT=8000
+      - API_PORT=${BACKEND_PORT:-8000}
     volumes:
       - ./backend:/app:ro
       - ./backend/settings.txt:/app/settings.txt:ro
@@ -79,7 +81,7 @@ services:
     ports:
       - "${QDRANT_PORT:-6333}:6333"
     environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__HTTP_PORT=${QDRANT_PORT:-6333}
       - QDRANT__SERVICE__GRPC_PORT=6334
       - QDRANT__LOG_LEVEL=INFO
     volumes:

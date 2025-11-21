@@ -15,9 +15,10 @@ NC := \033[0m # No Color
 NGINX_PORT ?= 8080
 BACKEND_PORT ?= 8000
 QDRANT_PORT ?= 6333
+VITE_PORT ?= 3000
 
 # Export for docker-compose
-export NGINX_PORT BACKEND_PORT QDRANT_PORT
+export NGINX_PORT BACKEND_PORT QDRANT_PORT VITE_PORT
 
 # Docker compose command (auto-detect version)
 DOCKER_COMPOSE := $(shell which docker-compose 2>/dev/null || echo "docker compose")
