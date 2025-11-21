@@ -14,6 +14,16 @@ NC := \033[0m # No Color
 # Docker compose command (auto-detect version)
 DOCKER_COMPOSE := $(shell which docker-compose 2>/dev/null || echo "docker compose")
 
+# Auto-detect ARM64 platform
+ARCH := $(shell uname -m)
+ifeq ($(ARCH),arm64)
+    COMPOSE_FILE := -f docker-compose.yml -f docker-compose.arm64.yml
+else ifeq ($(ARCH),aarch64)
+    COMPOSE_FILE := -f docker-compose.yml -f docker-compose.arm64.yml
+else
+    COMPOSE_FILE := -f docker-compose.yml
+endif
+
 # Default target - starts everything
 .PHONY: all
 all: run
@@ -22,7 +32,7 @@ all: run
 .PHONY: run
 run: header check-prerequisites
 	@echo "$(BLUE)🚀 Starting Claude Code Memory Explorer...$(NC)"
-	@$(DOCKER_COMPOSE) up -d
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) up -d
 	@echo "$(GREEN)⏳ Waiting for services to be ready...$(NC)"
 	@sleep 5
 	@make health-check
@@ -45,33 +55,33 @@ run: header check-prerequisites
 .PHONY: dev
 dev: header
 	@echo "$(BLUE)🔧 Starting in development mode with hot reload...$(NC)"
-	@$(DOCKER_COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml up
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) -f docker-compose.dev.yml up
 
 # Stop all services
 .PHONY: stop
 stop:
 	@echo "$(YELLOW)🛑 Stopping all services...$(NC)"
-	@$(DOCKER_COMPOSE) down
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) down
 	@echo "$(GREEN)✅ All services stopped$(NC)"
 
 # Restart services
 .PHONY: restart
 restart:
 	@echo "$(YELLOW)🔄 Restarting services...$(NC)"
-	@$(DOCKER_COMPOSE) restart
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) restart
 	@echo "$(GREEN)✅ Services restarted$(NC)"
 
 # View logs
 .PHONY: logs
 logs:
 	@echo "$(BLUE)📋 Showing logs (Ctrl+C to exit)...$(NC)"
-	@$(DOCKER_COMPOSE) logs -f
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) logs -f
 
 # View logs for specific service
 .PHONY: logs-%
 logs-%:
 	@echo "$(BLUE)📋 Showing logs for $* (Ctrl+C to exit)...$(NC)"
-	@$(DOCKER_COMPOSE) logs -f $*
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) logs -f $*
 
 # Clean everything (including volumes)
 .PHONY: clean
@@ -79,35 +89,35 @@ clean:
 	@echo "$(RED)⚠️  This will remove all containers, volumes, and data!$(NC)"
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "$(YELLOW)🧹 Cleaning up...$(NC)"
-	@$(DOCKER_COMPOSE) down -v --rmi local
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) down -v --rmi local
 	@echo "$(GREEN)✅ Cleanup complete$(NC)"
 
 # Rebuild images
 .PHONY: rebuild
 rebuild:
 	@echo "$(YELLOW)🔨 Rebuilding images...$(NC)"
-	@$(DOCKER_COMPOSE) build --no-cache
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) build --no-cache
 	@echo "$(GREEN)✅ Images rebuilt$(NC)"
 
 # Build images
 .PHONY: build
 build:
 	@echo "$(YELLOW)🔨 Building images...$(NC)"
-	@$(DOCKER_COMPOSE) build
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) build
 	@echo "$(GREEN)✅ Images built$(NC)"
 
 # Pull latest images
 .PHONY: pull
 pull:
 	@echo "$(BLUE)⬇️  Pulling latest images...$(NC)"
-	@$(DOCKER_COMPOSE) pull
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) pull
 	@echo "$(GREEN)✅ Images updated$(NC)"
 
 # Check service status
 .PHONY: status
 status:
 	@echo "$(BLUE)📊 Service Status:$(NC)"
-	@$(DOCKER_COMPOSE) ps
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) ps
 
 # Health check
 .PHONY: health-check
@@ -121,7 +131,7 @@ health-check:
 .PHONY: shell-%
 shell-%:
 	@echo "$(BLUE)🐚 Opening shell in $* container...$(NC)"
-	@$(DOCKER_COMPOSE) exec $* /bin/sh
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) exec $* /bin/sh
 
 # Index a sample project (for testing)
 .PHONY: index-sample

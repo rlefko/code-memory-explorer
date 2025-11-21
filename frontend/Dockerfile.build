@@ -4,10 +4,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
 
-# Install dependencies
-RUN npm ci --silent
+# Install dependencies (using install instead of ci for compatibility)
+RUN npm install --silent
 
 # Copy source code
 COPY . .

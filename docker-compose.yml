@@ -33,7 +33,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.build
+      platforms:
+        - linux/amd64
+        - linux/arm64
     container_name: claude-memory-frontend-builder
+    platform: linux/arm64
     volumes:
       - frontend-build:/app/dist
     networks:
@@ -44,7 +48,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     container_name: claude-memory-backend
+    platform: linux/arm64
     environment:
       - QDRANT_URL=http://qdrant:6333
       - PYTHONUNBUFFERED=1
