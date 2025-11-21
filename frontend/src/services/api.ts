@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as d3 from 'd3';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -59,7 +60,7 @@ export interface SearchResponse {
   took_ms: number;
 }
 
-export interface GraphNode {
+export interface GraphNode extends d3.SimulationNodeDatum {
   id: string;
   name: string;
   entity_type: string;
