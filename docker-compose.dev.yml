@@ -7,8 +7,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-      qdrant:
-        condition: service_healthy
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/404.html:/usr/share/nginx/html/404.html:ro
