@@ -11,15 +11,15 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: parseInt(process.env.VITE_PORT || '3000'),
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: (process.env.VITE_BACKEND_URL || 'http://localhost:8000').replace('http', 'ws'),
         ws: true,
       },
     },
