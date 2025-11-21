@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import Editor from '@monaco-editor/react';
-import { getEntityImplementation, getEntity, getEntityRelations } from '@/services/api';
+import {
+  getEntityImplementation,
+  getEntity,
+  getEntityRelations,
+  EntityRelation,
+  EntityDependency
+} from '@/services/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, FileCode, GitBranch, Layers, ChevronRight, Copy, Maximize2 } from 'lucide-react';
@@ -270,7 +276,7 @@ export default function CodeViewer({ entityName, collection, onClose }: CodeView
                         Called by ({relations.incoming_relations.length}):
                       </span>
                       <ul className="text-xs mt-1 space-y-1">
-                        {relations.incoming_relations.slice(0, 5).map((rel, i) => (
+                        {relations.incoming_relations.slice(0, 5).map((rel: EntityRelation, i: number) => (
                           <li key={i} className="flex items-center gap-2">
                             <span className="text-primary cursor-pointer hover:underline">
                               {rel.from}
@@ -293,7 +299,7 @@ export default function CodeViewer({ entityName, collection, onClose }: CodeView
                         Calls ({relations.outgoing_relations.length}):
                       </span>
                       <ul className="text-xs mt-1 space-y-1">
-                        {relations.outgoing_relations.slice(0, 5).map((rel, i) => (
+                        {relations.outgoing_relations.slice(0, 5).map((rel: EntityRelation, i: number) => (
                           <li key={i} className="flex items-center gap-2">
                             <span className="text-primary cursor-pointer hover:underline">
                               {rel.to}
@@ -321,7 +327,7 @@ export default function CodeViewer({ entityName, collection, onClose }: CodeView
                 </CardHeader>
                 <CardContent>
                   <ul className="text-xs space-y-1">
-                    {implementation.dependencies.map((dep) => (
+                    {implementation.dependencies.map((dep: EntityDependency) => (
                       <li key={dep.id} className="flex items-center gap-2">
                         <span className="text-primary cursor-pointer hover:underline">
                           {dep.name}

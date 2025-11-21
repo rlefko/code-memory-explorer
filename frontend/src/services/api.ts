@@ -82,6 +82,32 @@ export interface GraphData {
   metadata: Record<string, any>;
 }
 
+export interface EntityRelation {
+  from: string;
+  to: string;
+  type: string;
+  confidence?: number;
+  context?: string;
+}
+
+export interface EntityRelationsResponse {
+  incoming_relations: EntityRelation[];
+  outgoing_relations: EntityRelation[];
+}
+
+export interface EntityDependency {
+  id: string;
+  name: string;
+  entity_type: string;
+  file_path?: string;
+}
+
+export interface ImplementationResponse {
+  implementation: string;
+  dependencies?: EntityDependency[];
+  scope: 'minimal' | 'logical' | 'dependencies';
+}
+
 // API functions
 
 // Collections
@@ -164,14 +190,14 @@ export const getEntityImplementation = async (
   entityName: string,
   collection: string,
   scope: 'minimal' | 'logical' | 'dependencies' = 'minimal'
-) => {
+): Promise<ImplementationResponse> => {
   const response = await api.get(`/entities/${entityName}/implementation`, {
     params: { collection, scope },
   });
   return response.data;
 };
 
-export const getEntityRelations = async (entityName: string, collection: string) => {
+export const getEntityRelations = async (entityName: string, collection: string): Promise<EntityRelationsResponse> => {
   const response = await api.get(`/entities/${entityName}/relations`, {
     params: { collection },
   });

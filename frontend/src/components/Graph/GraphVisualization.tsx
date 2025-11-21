@@ -130,12 +130,12 @@ export default function GraphVisualization({
       .attr('stroke', (d) => (d.id === selectedNode ? '#000' : '#fff'))
       .attr('stroke-width', (d) => (d.id === selectedNode ? 3 : 1.5))
       .style('cursor', 'pointer')
-      .on('click', (event, d) => {
+      .on('click', (_event, d) => {
         if (onNodeClick) {
           onNodeClick(d.id);
         }
       })
-      .on('mouseover', function (event, d) {
+      .on('mouseover', function (_event, d) {
         // Highlight connected nodes
         link
           .style('opacity', (l: any) =>
@@ -229,8 +229,6 @@ export default function GraphVisualization({
   const handleResetZoom = () => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
 
     svg
       .transition()
