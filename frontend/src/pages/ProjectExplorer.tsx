@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import GraphVisualization from '@/components/Graph/GraphVisualization';
 import CodeViewer from '@/components/CodeViewer/CodeViewer';
 import SearchBar from '@/components/Search/SearchBar';
-import { Home, Network, Code, Search, Settings, ChevronLeft } from 'lucide-react';
+import { Network, Code, Search, Settings, ChevronLeft } from 'lucide-react';
 
 export default function ProjectExplorer() {
   const { collection } = useParams<{ collection: string }>();
