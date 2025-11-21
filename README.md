@@ -60,6 +60,71 @@ make clean     # Remove everything (including data)
 make help      # See all available commands
 ```
 
+## ⚙️ Environment Configuration
+
+### Using External Qdrant Instance
+
+If you already have Qdrant running with indexed data (like at `localhost:6333`), you can use it instead of spinning up a new container:
+
+#### 1. Create Your .env File
+Copy `.env.template` to `.env` and configure for external Qdrant:
+
+```bash
+# Copy template
+cp .env.template .env
+
+# Edit .env file with these key settings:
+USE_EXTERNAL_QDRANT=true
+EXTERNAL_QDRANT_URL=http://host.docker.internal:6333  # For macOS/Windows
+# For Linux, use: EXTERNAL_QDRANT_URL=http://172.17.0.1:6333
+```
+
+#### 2. Start with External Qdrant
+```bash
+make external-qdrant
+```
+
+### Environment Variables Reference
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `USE_EXTERNAL_QDRANT` | Use existing Qdrant instead of Docker container | `false` | `true` |
+| `EXTERNAL_QDRANT_URL` | URL for external Qdrant from Docker | - | `http://host.docker.internal:6333` |
+| `NGINX_PORT` | Main application port | `8080` | `9090` |
+| `BACKEND_PORT` | Backend API port (internal) | `8000` | `9000` |
+| `QDRANT_PORT` | Qdrant port (internal mode only) | `6333` | `6334` |
+| `QDRANT_API_KEY` | Qdrant authentication key | - | `my_secret_key` |
+| `QDRANT_COLLECTION` | Default collection to load | - | `my-project` |
+
+### Platform-Specific Notes
+
+**macOS/Windows (Docker Desktop):**
+- Use `host.docker.internal` to access host services from Docker
+- Example: `EXTERNAL_QDRANT_URL=http://host.docker.internal:6333`
+
+**Linux:**
+- Use Docker bridge IP or host IP
+- Example: `EXTERNAL_QDRANT_URL=http://172.17.0.1:6333`
+- Or use your machine's IP address
+
+### Switching Between Modes
+
+**To use external Qdrant:**
+```bash
+# Edit .env
+USE_EXTERNAL_QDRANT=true
+# Run
+make external-qdrant
+```
+
+**To use internal Qdrant container:**
+```bash
+# Edit .env
+USE_EXTERNAL_QDRANT=false
+# Run
+make run
+```
+
 ## 📍 Access Points
 
 Everything is served through nginx on **port 8080**:
