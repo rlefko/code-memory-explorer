@@ -1,0 +1,23 @@
+# ARM64 (Apple Silicon) specific overrides
+version: '3.8'
+
+services:
+  # Override platform settings for ARM64
+  frontend:
+    platform: linux/arm64
+
+  backend:
+    platform: linux/arm64
+    # Additional ARM64-specific build args if needed
+    build:
+      args:
+        - TARGETPLATFORM=linux/arm64
+        - BUILDPLATFORM=linux/arm64
+
+  # Qdrant already supports multi-arch
+  qdrant:
+    platform: linux/arm64
+
+  # Nginx Alpine already supports multi-arch
+  nginx:
+    platform: linux/arm64
