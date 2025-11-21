@@ -11,6 +11,14 @@ CYAN := \033[1;36m
 WHITE := \033[1;37m
 NC := \033[0m # No Color
 
+# Port configuration (with defaults)
+NGINX_PORT ?= 8080
+BACKEND_PORT ?= 8000
+QDRANT_PORT ?= 6333
+
+# Export for docker-compose
+export NGINX_PORT BACKEND_PORT QDRANT_PORT
+
 # Docker compose command (auto-detect version)
 DOCKER_COMPOSE := $(shell which docker-compose 2>/dev/null || echo "docker compose")
 
@@ -32,16 +40,16 @@ all: run
 .PHONY: run
 run: header check-prerequisites
 	@echo "$(BLUE)🚀 Starting Claude Code Memory Explorer...$(NC)"
-	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) up -d
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) --profile internal-qdrant up -d
 	@echo "$(GREEN)⏳ Waiting for services to be ready...$(NC)"
 	@sleep 5
 	@make health-check
 	@echo ""
 	@echo "$(GREEN)✨ Application is ready!$(NC)"
 	@echo "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(WHITE)   🌐 Web Interface:$(NC) http://localhost:8080"
-	@echo "$(WHITE)   📚 API Docs:$(NC) http://localhost:8080/api/docs"
-	@echo "$(WHITE)   🔍 Qdrant:$(NC) http://localhost:8080/qdrant/dashboard"
+	@echo "$(WHITE)   🌐 Web Interface:$(NC) http://localhost:$(NGINX_PORT)"
+	@echo "$(WHITE)   📚 API Docs:$(NC) http://localhost:$(NGINX_PORT)/api/docs"
+	@echo "$(WHITE)   🔍 Qdrant:$(NC) http://localhost:$(NGINX_PORT)/qdrant/dashboard"
 	@echo "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
 	@echo ""
 	@echo "$(YELLOW)💡 Useful commands:$(NC)"
@@ -49,6 +57,28 @@ run: header check-prerequisites
 	@echo "   $(WHITE)make stop$(NC)    - Stop all services"
 	@echo "   $(WHITE)make restart$(NC) - Restart all services"
 	@echo "   $(WHITE)make clean$(NC)   - Remove everything"
+	@echo ""
+
+# Run with external Qdrant
+.PHONY: external-qdrant
+external-qdrant: header check-prerequisites check-external-qdrant
+	@echo "$(BLUE)🚀 Starting with external Qdrant instance...$(NC)"
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILE) -f docker-compose.external.yml up -d
+	@echo "$(GREEN)⏳ Waiting for services to be ready...$(NC)"
+	@sleep 5
+	@make health-check-external
+	@echo ""
+	@echo "$(GREEN)✨ Application is ready!$(NC)"
+	@echo "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(WHITE)   🌐 Web Interface:$(NC) http://localhost:$(NGINX_PORT)"
+	@echo "$(WHITE)   📚 API Docs:$(NC) http://localhost:$(NGINX_PORT)/api/docs"
+	@echo "$(WHITE)   🔍 Using external Qdrant at:$(NC) localhost:6333"
+	@echo "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo ""
+	@echo "$(YELLOW)💡 Useful commands:$(NC)"
+	@echo "   $(WHITE)make logs$(NC)    - View application logs"
+	@echo "   $(WHITE)make stop$(NC)    - Stop all services"
+	@echo "   $(WHITE)make restart$(NC) - Restart all services"
 	@echo ""
 
 # Development mode with hot reload
@@ -123,9 +153,24 @@ status:
 .PHONY: health-check
 health-check:
 	@echo "$(BLUE)🏥 Checking service health...$(NC)"
-	@curl -f http://localhost:8080/api/health > /dev/null 2>&1 && echo "$(GREEN)✅ Backend API: Healthy$(NC)" || echo "$(RED)❌ Backend API: Not responding$(NC)"
-	@curl -f http://localhost:8080/qdrant/health > /dev/null 2>&1 && echo "$(GREEN)✅ Qdrant DB: Healthy$(NC)" || echo "$(RED)❌ Qdrant DB: Not responding$(NC)"
-	@curl -f http://localhost:8080/ > /dev/null 2>&1 && echo "$(GREEN)✅ Frontend: Healthy$(NC)" || echo "$(RED)❌ Frontend: Not responding$(NC)"
+	@curl -f http://localhost:$(NGINX_PORT)/api/health > /dev/null 2>&1 && echo "$(GREEN)✅ Backend API: Healthy$(NC)" || echo "$(RED)❌ Backend API: Not responding$(NC)"
+	@curl -f http://localhost:$(NGINX_PORT)/qdrant/health > /dev/null 2>&1 && echo "$(GREEN)✅ Qdrant DB: Healthy$(NC)" || echo "$(RED)❌ Qdrant DB: Not responding$(NC)"
+	@curl -f http://localhost:$(NGINX_PORT)/ > /dev/null 2>&1 && echo "$(GREEN)✅ Frontend: Healthy$(NC)" || echo "$(RED)❌ Frontend: Not responding$(NC)"
+
+# Health check for external Qdrant mode
+.PHONY: health-check-external
+health-check-external:
+	@echo "$(BLUE)🏥 Checking service health (external Qdrant)...$(NC)"
+	@curl -f http://localhost:$(NGINX_PORT)/api/health > /dev/null 2>&1 && echo "$(GREEN)✅ Backend API: Healthy$(NC)" || echo "$(RED)❌ Backend API: Not responding$(NC)"
+	@curl -f http://localhost:6333/health > /dev/null 2>&1 && echo "$(GREEN)✅ External Qdrant: Healthy$(NC)" || echo "$(RED)❌ External Qdrant: Not responding$(NC)"
+	@curl -f http://localhost:$(NGINX_PORT)/ > /dev/null 2>&1 && echo "$(GREEN)✅ Frontend: Healthy$(NC)" || echo "$(RED)❌ Frontend: Not responding$(NC)"
+
+# Check if external Qdrant is available
+.PHONY: check-external-qdrant
+check-external-qdrant:
+	@echo "$(BLUE)🔍 Checking external Qdrant availability...$(NC)"
+	@curl -f http://localhost:6333/health > /dev/null 2>&1 || (echo "$(RED)❌ External Qdrant not found at localhost:6333$(NC)" && echo "$(YELLOW)Please ensure your Qdrant instance is running$(NC)" && exit 1)
+	@echo "$(GREEN)✅ External Qdrant is available$(NC)"
 
 # Shell access
 .PHONY: shell-%
