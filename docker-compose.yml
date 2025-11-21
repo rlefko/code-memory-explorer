@@ -17,8 +17,6 @@ services:
         condition: service_completed_successfully
       backend:
         condition: service_healthy
-      qdrant:
-        condition: service_healthy
     networks:
       - claude-memory-network
     restart: unless-stopped
@@ -56,7 +54,7 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
-      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
       - PYTHONUNBUFFERED=1
       - API_HOST=0.0.0.0
       - API_PORT=${BACKEND_PORT:-8000}
@@ -71,12 +69,13 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    depends_on:
-      qdrant:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-  # Qdrant - Vector Database
+  # Qdrant - Vector Database (optional - only runs when using internal Qdrant)
   qdrant:
+    profiles:
+      - internal-qdrant
     image: qdrant/qdrant:latest
     container_name: claude-memory-qdrant
     ports:

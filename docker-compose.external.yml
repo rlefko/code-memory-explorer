@@ -1,0 +1,26 @@
+# Docker Compose override for using external Qdrant instance
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.external.yml up
+
+version: '3.8'
+
+services:
+  # Override backend to use external Qdrant
+  backend:
+    environment:
+      # Use host.docker.internal to reach host's localhost from Docker container
+      # This works on Docker Desktop (Mac/Windows)
+      # For Linux, you may need to use the host's IP or 172.17.0.1
+      - QDRANT_URL=${EXTERNAL_QDRANT_URL:-http://host.docker.internal:6333}
+      - PYTHONUNBUFFERED=1
+      - API_HOST=0.0.0.0
+      - API_PORT=${BACKEND_PORT:-8000}
+    # Remove dependency on qdrant service since we're using external
+    depends_on: []
+
+  # Nginx only depends on frontend and backend, not qdrant
+  nginx:
+    depends_on:
+      frontend:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
