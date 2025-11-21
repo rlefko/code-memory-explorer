@@ -139,9 +139,9 @@ print_message "🎉 Setup complete!" "$GREEN"
 print_message "=================================" "$GREEN"
 echo
 print_message "📍 Access the application at:" "$BLUE"
-print_message "   Web Interface: http://localhost:3000" "$NC"
-print_message "   API Documentation: http://localhost:8000/docs" "$NC"
-print_message "   Qdrant Dashboard: http://localhost:6333/dashboard" "$NC"
+print_message "   Web Interface: http://localhost:${NGINX_PORT:-8080}" "$NC"
+print_message "   API Documentation: http://localhost:${NGINX_PORT:-8080}/api/docs" "$NC"
+print_message "   Qdrant Dashboard: http://localhost:${NGINX_PORT:-8080}/qdrant/dashboard" "$NC"
 echo
 print_message "📝 Useful commands:" "$BLUE"
 print_message "   View logs: $COMPOSE_CMD logs -f" "$NC"
