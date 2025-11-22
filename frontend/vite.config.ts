@@ -15,11 +15,11 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
+        target: 'http://host.docker.internal:8000',
         changeOrigin: true,
       },
       '/ws': {
-        target: (process.env.VITE_BACKEND_URL || 'http://localhost:8000').replace('http', 'ws'),
+        target: 'ws://host.docker.internal:8000',
         ws: true,
       },
     },
